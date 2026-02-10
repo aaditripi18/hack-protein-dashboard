@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
+
+import ProteinAIAgent from './ProteinAIAgent';
 import ProteinSearchBar from '@/components/ProteinSearchBar';
 import ProteinViewer3D from '@/components/ProteinViewer3D';
 import MutationPathogenicityCard from '@/components/MutationPathogenicityCard';
@@ -7,9 +9,10 @@ import ClinicalVariantsTable from '@/components/ClinicalVariantsTable';
 import SpatialHotspotDetector from '@/components/SpatialHotspotDetector';
 import AnomalyVisualization from '@/components/AnomalyVisualization';
 import ResearchContext from '@/components/ResearchContext';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { proteinDatabase } from '@/data/proteinSampleData';
-import { Dna, AlertCircle, Flame, Activity } from 'lucide-react';
+import { AlertCircle, Flame, Activity, Dna } from 'lucide-react';
 
 function ProteinLabDashboard() {
   const [selectedProtein, setSelectedProtein] = useState('TP53');
@@ -20,7 +23,6 @@ function ProteinLabDashboard() {
   const proteinData = proteinDatabase[selectedProtein];
 
   useEffect(() => {
-    // Reset selections when protein changes
     setSelectedMutation(null);
     setHighlightedRegions([]);
   }, [selectedProtein]);
@@ -40,35 +42,39 @@ function ProteinLabDashboard() {
     setHighlightedRegions([region]);
   };
 
+  // 🧠 AI CONTEXT (RESTORED)
+  const aiContext = {
+    gene: proteinData?.metadata?.geneSymbol,
+    description: proteinData?.metadata?.description,
+    mutationCount: proteinData?.mutations?.length,
+    mutations: proteinData?.mutations,
+    hotspots: proteinData?.hotspots,
+    selectedMutation: selectedMutation,
+  };
+
   return (
     <>
       <Helmet>
         <title>ProteinLab Dashboard - Advanced Protein Structure Analysis</title>
         <meta
           name="description"
-          content="Interactive 3D protein structure visualization and mutation analysis platform for rare disease research. Analyze pathogenicity scores, spatial hotspots, and clinical variants."
+          content="Interactive 3D protein structure visualization and mutation analysis platform for rare disease research."
         />
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-        {/* Header */}
+        
+        {/* 🔥 HEADER (ProteinLab title REMOVED here) */}
         <header className="border-b border-white/10 bg-black/20 backdrop-blur-md">
           <div className="max-w-[1800px] mx-auto px-6 py-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
-                  <Dna className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-white">ProteinLab</h1>
-                  <p className="text-xs text-gray-400">Advanced Protein Structure Analysis</p>
-                </div>
-              </div>
+            <div className="flex items-center justify-end mb-4">
               {proteinData && (
                 <div className="flex items-center gap-4 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20">
                   <div className="text-right">
                     <div className="text-sm text-gray-300">Currently Viewing</div>
-                    <div className="text-lg font-bold text-white">{proteinData.metadata.geneSymbol}</div>
+                    <div className="text-lg font-bold text-white">
+                      {proteinData.metadata.geneSymbol}
+                    </div>
                   </div>
                   <div className="h-8 w-px bg-white/20"></div>
                   <div className="text-xs text-gray-400">
@@ -77,14 +83,16 @@ function ProteinLabDashboard() {
                 </div>
               )}
             </div>
+
             <ProteinSearchBar onSelectProtein={handleSelectProtein} />
           </div>
         </header>
 
-        {/* Main Content */}
+        {/* MAIN CONTENT */}
         <main className="max-w-[1800px] mx-auto px-6 py-6">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            {/* Left Panel - 3D Viewer */}
+
+            {/* LEFT PANEL */}
             <div className="lg:col-span-3 space-y-6">
               <div className="h-[600px] rounded-xl overflow-hidden shadow-2xl">
                 <ProteinViewer3D
@@ -94,49 +102,32 @@ function ProteinLabDashboard() {
                 />
               </div>
 
-              {/* Mutation Card below viewer on desktop */}
               <div className="hidden lg:block">
                 <MutationPathogenicityCard mutation={selectedMutation} />
               </div>
             </div>
 
-            {/* Right Panel - Tabbed Interface */}
+            {/* RIGHT PANEL */}
             <div className="lg:col-span-2">
               <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 shadow-2xl">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="w-full grid grid-cols-4 bg-black/40 backdrop-blur-sm border-b border-white/10">
-                    <TabsTrigger value="mutations" className="data-[state=active]:bg-white/20">
-                      <div className="flex items-center gap-1">
-                        <Dna className="h-4 w-4" />
-                        <span className="hidden sm:inline">Mutations</span>
-                      </div>
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList className="w-full grid grid-cols-4 bg-black/40 border-b border-white/10">
+                    <TabsTrigger value="mutations">
+                      <Dna className="h-4 w-4 mr-1" /> Mutations
                     </TabsTrigger>
-                    <TabsTrigger value="hotspots" className="data-[state=active]:bg-white/20">
-                      <div className="flex items-center gap-1">
-                        <Flame className="h-4 w-4" />
-                        <span className="hidden sm:inline">Hotspots</span>
-                      </div>
+                    <TabsTrigger value="hotspots">
+                      <Flame className="h-4 w-4 mr-1" /> Hotspots
                     </TabsTrigger>
-                    <TabsTrigger value="anomalies" className="data-[state=active]:bg-white/20">
-                      <div className="flex items-center gap-1">
-                        <Activity className="h-4 w-4" />
-                        <span className="hidden sm:inline">Anomalies</span>
-                      </div>
+                    <TabsTrigger value="anomalies">
+                      <Activity className="h-4 w-4 mr-1" /> Anomalies
                     </TabsTrigger>
-                    <TabsTrigger value="research" className="data-[state=active]:bg-white/20">
-                      <div className="flex items-center gap-1">
-                        <AlertCircle className="h-4 w-4" />
-                        <span className="hidden sm:inline">Research</span>
-                      </div>
+                    <TabsTrigger value="research">
+                      <AlertCircle className="h-4 w-4 mr-1" /> Research
                     </TabsTrigger>
                   </TabsList>
 
                   <div className="p-4 max-h-[700px] overflow-y-auto">
-                    <TabsContent value="mutations" className="mt-0 space-y-4">
-                      {/* Mobile mutation card */}
-                      <div className="lg:hidden">
-                        <MutationPathogenicityCard mutation={selectedMutation} />
-                      </div>
+                    <TabsContent value="mutations">
                       <ClinicalVariantsTable
                         mutations={proteinData?.mutations || []}
                         onSelectMutation={handleSelectMutation}
@@ -144,27 +135,32 @@ function ProteinLabDashboard() {
                       />
                     </TabsContent>
 
-                    <TabsContent value="hotspots" className="mt-0">
+                    <TabsContent value="hotspots">
                       <SpatialHotspotDetector
                         hotspots={proteinData?.hotspots || []}
                         onHighlightRegion={handleHighlightRegion}
                       />
                     </TabsContent>
 
-                    <TabsContent value="anomalies" className="mt-0">
+                    <TabsContent value="anomalies">
                       <AnomalyVisualization
                         proteinData={proteinData}
                         onHighlightRegion={handleHighlightRegion}
                       />
                     </TabsContent>
 
-                    <TabsContent value="research" className="mt-0">
+                    {/* 🧠 AI ASSISTANT (RESTORED & WORKING) */}
+                    <TabsContent value="research" className="space-y-4">
                       <ResearchContext proteinData={proteinData} />
+                      <ProteinAIAgent
+                        context={JSON.stringify(aiContext, null, 2)}
+                      />
                     </TabsContent>
                   </div>
                 </Tabs>
               </div>
             </div>
+
           </div>
         </main>
       </div>
